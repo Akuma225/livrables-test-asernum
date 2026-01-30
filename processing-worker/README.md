@@ -125,17 +125,62 @@ Le service gère gracieusement l'indisponibilité de ClamAV (mode dégradé).
 
 ### Compression Optionnelle
 
-Lors de l'upload, le client peut spécifier des options de compression :
+Lors de l'upload, le client peut spécifier des options de compression. Ces options sont transmises via l'événement Kafka et traitées par le worker.
+
+#### Structure du DTO de Traitement
 
 ```json
 {
-  "image_processing_opts": { "compression": { "level": 6 } },
-  "video_processing_opts": { "compression": { "level": 6 } },
-  "audio_processing_opts": { "compression": { "level": 6 } }
+  "document_id": "550e8400-e29b-41d4-a716-446655440000",
+  "image_processing_opts": {
+    "compression": {
+      "level": 80
+    }
+  },
+  "video_processing_opts": {
+    "compression": {
+      "level": 60
+    }
+  },
+  "audio_processing_opts": {
+    "compression": {
+      "level": 70
+    }
+  },
+  "doc_processing_opts": {
+    "opts": {}
+  }
 }
 ```
 
-Le niveau va de 1 (qualité maximale) à 99 (compression maximale).
+#### Options de Compression
+
+| Champ | Type | Requis | Description |
+|-------|------|--------|-------------|
+| `document_id` | UUID | Oui | ID du document à traiter |
+| `image_processing_opts` | Object | Non | Options pour les images |
+| `video_processing_opts` | Object | Non | Options pour les vidéos |
+| `audio_processing_opts` | Object | Non | Options pour les fichiers audio |
+| `doc_processing_opts` | Object | Non | Options pour les documents (réservé) |
+
+#### Niveau de Compression
+
+```json
+{
+  "compression": {
+    "level": 80
+  }
+}
+```
+
+| Propriété | Type | Min | Max | Description |
+|-----------|------|-----|-----|-------------|
+| `level` | Integer | 1 | 99 | 1 = qualité maximale, 99 = compression maximale |
+
+**Recommandations :**
+- Images : `level: 80` (bon compromis qualité/taille)
+- Vidéos : `level: 60` (préserve la qualité visuelle)
+- Audio : `level: 70` (qualité acceptable pour la plupart des usages)
 
 ### Gestion des Buckets
 

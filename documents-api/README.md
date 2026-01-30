@@ -82,6 +82,110 @@ src/
 |----------|---------|-------------|
 | `/v1/search` | GET | Recherche globale (documents + dossiers) |
 
+## Exemples de Requêtes
+
+### Authentification
+
+#### POST `/v1/auth/register` - Inscription
+
+```json
+{
+  "firstname": "John",
+  "lastname": "Doe",
+  "email": "john.doe@example.com",
+  "password": "SecureP@ss123!"
+}
+```
+
+> Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un symbole.
+
+#### POST `/v1/auth/login` - Connexion
+
+```json
+{
+  "email": "john.doe@example.com",
+  "password": "SecureP@ss123!"
+}
+```
+
+### Gestion des Dossiers
+
+#### POST `/v1/folders` - Créer un dossier
+
+```json
+{
+  "name": "Mes Documents",
+  "parent_id": null
+}
+```
+
+Avec dossier parent :
+
+```json
+{
+  "name": "Sous-dossier",
+  "parent_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+#### PATCH `/v1/folders/:id` - Modifier un dossier
+
+Renommer :
+
+```json
+{
+  "name": "Nouveau nom"
+}
+```
+
+Déplacer vers un autre dossier :
+
+```json
+{
+  "parent_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+Déplacer à la racine :
+
+```json
+{
+  "parent_id": null
+}
+```
+
+### Gestion des Documents
+
+#### POST `/v1/documents/upload` - Upload d'un fichier
+
+> Requête `multipart/form-data`
+
+| Champ | Type | Requis | Description |
+|-------|------|--------|-------------|
+| `file` | File | Oui | Le fichier à uploader |
+| `folder_id` | UUID | Oui | ID du dossier cible |
+| `image_processing_opts` | JSON | Non | Options de compression image |
+| `video_processing_opts` | JSON | Non | Options de compression vidéo |
+| `audio_processing_opts` | JSON | Non | Options de compression audio |
+
+Exemple avec options de compression :
+
+```
+Content-Type: multipart/form-data
+
+file: [binary]
+folder_id: "550e8400-e29b-41d4-a716-446655440000"
+image_processing_opts: {"compression":{"level":80}}
+```
+
+#### PATCH `/v1/documents/:id/move` - Déplacer un document
+
+```json
+{
+  "folder_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
 ## Flux d'Upload
 
 ```

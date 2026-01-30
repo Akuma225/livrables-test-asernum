@@ -120,6 +120,112 @@ Le fichier `.npmrc` doit être configuré pour accéder aux packages privés :
 | `/v1/sharing-links/:id/treat-pending` | PATCH | Accepter/Refuser une invitation |
 | `/v1/sharing-links/:id/revoke` | PATCH | Révoquer un lien |
 
+## Exemples de Requêtes
+
+### POST `/v1/sharing-links` - Créer un lien de partage
+
+#### Partage Public (sans destinataire)
+
+```json
+{
+  "mode": "PUBLIC",
+  "access": "READ",
+  "expiration_date": "2026-12-31T23:59:59.000Z",
+  "items": [
+    { "document_id": "550e8400-e29b-41d4-a716-446655440000" },
+    { "folder_id": "660e8400-e29b-41d4-a716-446655440001" }
+  ]
+}
+```
+
+#### Partage Privé (avec invitation)
+
+```json
+{
+  "mode": "PRIVATE",
+  "access": "READ_WRITE",
+  "recipient_id": "770e8400-e29b-41d4-a716-446655440002",
+  "expiration_date": "2026-06-30T23:59:59.000Z",
+  "items": [
+    { "document_id": "550e8400-e29b-41d4-a716-446655440000" }
+  ]
+}
+```
+
+#### Valeurs possibles
+
+| Champ | Valeurs | Description |
+|-------|---------|-------------|
+| `mode` | `PUBLIC`, `PRIVATE` | Type de partage |
+| `access` | `READ`, `WRITE`, `READ_WRITE` | Niveau d'accès accordé |
+| `expiration_date` | ISO 8601 | Date d'expiration (optionnel) |
+| `recipient_id` | UUID | Destinataire (requis si PRIVATE) |
+
+#### Structure des Items
+
+Chaque item doit contenir **soit** un `document_id`, **soit** un `folder_id` (jamais les deux) :
+
+```json
+{
+  "items": [
+    { "document_id": "..." },
+    { "folder_id": "..." }
+  ]
+}
+```
+
+---
+
+### PATCH `/v1/sharing-links/:id` - Modifier un lien
+
+```json
+{
+  "mode": "PRIVATE",
+  "access": "READ"
+}
+```
+
+> Seuls `mode` et `access` peuvent être modifiés après création.
+
+---
+
+### PATCH `/v1/sharing-links/:id/treat-pending` - Accepter/Refuser une invitation
+
+#### Accepter l'invitation
+
+```json
+{
+  "status": "APPROVED"
+}
+```
+
+#### Refuser l'invitation
+
+```json
+{
+  "status": "REJECTED",
+  "reason": "Je n'ai pas besoin d'accéder à ces documents"
+}
+```
+
+| Champ | Valeurs | Requis | Description |
+|-------|---------|--------|-------------|
+| `status` | `APPROVED`, `REJECTED` | Oui | Décision du destinataire |
+| `reason` | String | Non | Motif du refus (optionnel) |
+
+---
+
+### PATCH `/v1/sharing-links/:id/revoke` - Révoquer un lien
+
+> Pas de body requis. La révocation est immédiate.
+
+```bash
+PATCH /v1/sharing-links/550e8400-e29b-41d4-a716-446655440000/revoke
+Authorization: Bearer <token>
+```
+
+---
+
 ## Workflow de Partage
 
 ### Partage Public
