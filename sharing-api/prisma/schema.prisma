@@ -1,0 +1,185 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model users {
+  id                      String          @id @default(uuid())
+  firstname               String
+  lastname                String
+  email                   String          @unique
+  password                String
+  is_active               Boolean         @default(true)
+  created_at              DateTime        @default(now())
+  updated_at              DateTime        @updatedAt
+  deleted_at              DateTime?
+  created_by              String?
+  updated_by              String?
+  deleted_by              String?
+  user_sessions           user_sessions[]
+  folders                 folders[]
+  owner_sharing_links     sharing_links[] @relation("owner_sharing_links")
+  recipient_sharing_links sharing_links[] @relation("recipient_sharing_links")
+}
+
+model user_sessions {
+  id            String    @id @default(uuid())
+  user_id       String
+  user          users     @relation(fields: [user_id], references: [id])
+  refresh_token String
+  metadata      Json?
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+  created_by    String?
+  updated_by    String?
+  deleted_by    String?
+}
+
+model folders {
+  id           String          @id @default(uuid())
+  parent_id    String?
+  parent       folders?        @relation("parent_folders", fields: [parent_id], references: [id])
+  user_id      String
+  user         users           @relation(fields: [user_id], references: [id])
+  name         String
+  created_at   DateTime        @default(now())
+  updated_at   DateTime        @updatedAt
+  deleted_at   DateTime?
+  created_by   String?
+  updated_by   String?
+  deleted_by   String?
+  sub_folders  folders[]       @relation("parent_folders")
+  documents    documents[]
+  sharingItems sharing_items[]
+
+  @@index([user_id])
+  @@index([parent_id])
+}
+
+model documents {
+  id            String          @id @default(uuid())
+  folder_id     String
+  folder        folders         @relation(fields: [folder_id], references: [id])
+  original_name String
+  stored_name   String
+  path          String
+  mime_type     String
+  size          Int
+  upload_status UploadStatus    @default(STAGING)
+  hash          String
+  metadata      Json?
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+  deleted_at    DateTime?
+  created_by    String?
+  updated_by    String?
+  deleted_by    String?
+  sharingItems  sharing_items[]
+
+  @@index([folder_id])
+}
+
+model sharing_links {
+  id                     String                   @id @default(uuid())
+  token                  String                   @unique
+  owner_id               String
+  owner                  users                    @relation("owner_sharing_links", fields: [owner_id], references: [id])
+  recipient_id           String?
+  recipient              users?                   @relation("recipient_sharing_links", fields: [recipient_id], references: [id])
+  expires_at             DateTime?
+  mode                   SharingMode              @default(PUBLIC)
+  access                 SharingAccess            @default(READ)
+  status                 SharingStatus            @default(PENDING)
+  status_reason          String?
+  status_last_changed_at DateTime?
+  created_at             DateTime                 @default(now())
+  updated_at             DateTime                 @updatedAt
+  deleted_at             DateTime?
+  created_by             String?
+  updated_by             String?
+  deleted_by             String?
+  sharing_link_histories sharing_link_histories[]
+  sharing_items          sharing_items[]
+
+  @@index([token])
+  @@index([recipient_id])
+  @@index([status])
+  @@index([owner_id])
+}
+
+model sharing_items {
+  id              String        @id @default(uuid())
+  sharing_link_id String
+  sharing_link    sharing_links @relation(fields: [sharing_link_id], references: [id])
+  document_id     String?
+  document        documents?    @relation(fields: [document_id], references: [id])
+  folder_id       String?
+  folder          folders?      @relation(fields: [folder_id], references: [id])
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+  deleted_at      DateTime?
+  created_by      String?
+  updated_by      String?
+  deleted_by      String?
+
+  @@index([sharing_link_id])
+  @@index([document_id])
+  @@index([folder_id])
+}
+
+model sharing_link_histories {
+  id              String        @id @default(uuid())
+  sharing_link_id String
+  sharing_link    sharing_links @relation(fields: [sharing_link_id], references: [id])
+  previous_status SharingStatus
+  new_status      SharingStatus
+  reason          String?
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+  deleted_at      DateTime?
+  created_by      String?
+  updated_by      String?
+  deleted_by      String?
+
+  @@index([sharing_link_id])
+}
+
+enum SharingMode {
+  PUBLIC
+  PRIVATE
+}
+
+enum SharingAccess {
+  READ
+  WRITE
+  READ_WRITE
+}
+
+enum SharingStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  INVITATION_EXPIRED
+  EXPIRED
+  REVOKED
+}
+
+enum UploadStatus {
+  STAGING
+  PROCESSING
+  UPLOADED
+  FAILED
+  IN_QUARANTINE
+}

@@ -1,0 +1,18 @@
+services:
+  clamav:
+    image: clamav/clamav:latest
+    container_name: clamav
+    networks:
+      - asernum
+    ports:
+      - "3310:3310"       # expose TCP 3310 pour ton app
+    volumes:
+      - clamav_db:/var/lib/clamav  # stocke la DB de virus pour persistance
+    restart: unless-stopped
+
+volumes:
+  clamav_db:
+
+networks:
+  asernum:
+    name: asernum

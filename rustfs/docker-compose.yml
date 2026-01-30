@@ -1,0 +1,32 @@
+services:
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: rustfs
+    restart: unless-stopped
+    networks:
+      - asernum
+
+    environment:
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_CONSOLE_ENABLE: "true"
+
+      RUSTFS_ACCESS_KEY: rustfsadmin
+      RUSTFS_SECRET_KEY: z7i9zkj2iq8baug6
+
+      RUSTFS_CORS_ALLOWED_ORIGINS: "*"
+      RUSTFS_CONSOLE_CORS_ALLOWED_ORIGINS: "*"
+
+    volumes:
+      - rustfs-data:/data
+
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+volumes:
+  rustfs-data:
+
+networks:
+  asernum:
+    name: asernum

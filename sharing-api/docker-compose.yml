@@ -1,0 +1,25 @@
+services:
+  sharing-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sharing-api
+    env_file:
+      - .env
+    # Fallback si DATABASE_URL n'est pas présent dans sharing-api/.env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://admin:1234@postgres:5432/asernum-documents-db}
+    # Prisma db push au démarrage (runtime) + attente DB
+    command:
+      - sh
+      - -c
+      - 'i=0; until npx prisma db push; do i=$((i+1)); if [ "$i" -ge 30 ]; then echo "DB non joignable après 60s" >&2; exit 1; fi; echo "En attente de Postgres... ($i/30)"; sleep 2; done; exec node dist/src/main.js'
+    ports:
+      - "3002:3002"
+    networks:
+      - asernum
+
+networks:
+  asernum:
+    name: asernum
+
